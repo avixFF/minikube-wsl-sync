@@ -22,7 +22,7 @@
 #
 # Requirements:
 # - yq (version 4) - easiest way to install is using webi:
-#   curl -sS https://webinstall.dev/yq@4 | bash
+#   curl -sS https://webinstall.dev/yq | bash
 #
 # Currently it only supports default cluster & user named "minikube".
 
@@ -67,12 +67,16 @@ if grep -qEi "(Microsoft|WSL)" /proc/version &>/dev/null; then
 
     # If kubernetes configuraton exists on Windows host
     if [[ -f "$WIN_HOME/.kube/config" ]]; then
-        # If kubernetes configuraton doesn't exist in WSL guest,
-        # create a default one that points towards Windows host
-        if [[ ! -f ~/.kube/config ]]; then
-            touch ~/.kube/config
-            chmod 700 ~/.kube/config # Prevent "This is insecure" warning
-            cat <<EOT >~/.kube/config
+        # If kubernetes configuraton already exists in WSL guest,
+        # back it up and create a new one that points towards Windows host.
+        # User can safely merge backup with the managed config file manually.
+        if [[ -f ~/.kube/config ]] && [[ ! -f ~/.kube/config.sync-backup ]]; then
+            mv ~/.kube/config{,.sync-backup}
+        fi
+
+        touch ~/.kube/config
+        chmod 700 ~/.kube/config # Prevent "This is insecure" warning
+        cat <<EOT >~/.kube/config
 apiVersion: v1
 clusters:
   - cluster:
@@ -92,7 +96,6 @@ users:
       client-certificate: $WIN_HOME/.minikube/profiles/minikube/client.crt
       client-key: $WIN_HOME/.minikube/profiles/minikube/client.key
 EOT
-        fi
 
         MINIKUBE_HOST="$(yq e '.clusters.[] | select(.name == "minikube") | .cluster.server // "UNABLE_TO_FIND_HOST_FILE"' "$WIN_HOME/.kube/config")"
 
