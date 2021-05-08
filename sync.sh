@@ -22,7 +22,7 @@
 #
 # Requirements:
 # - yq (version 4) - easiest way to install is using webi:
-#   curl -sS https://webinstall.dev/yq | bash
+#   curl -sS https://webinstall.dev/yq@4 | bash
 #
 # Currently it only supports default cluster & user named "minikube".
 
